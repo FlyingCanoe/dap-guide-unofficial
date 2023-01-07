@@ -1,0 +1,6 @@
+[book]
+authors = ["FlyingCanoe"]
+language = "en"
+multilingual = false
+src = "src"
+title = "a unofficial guide to the debug adapteur protocol"
