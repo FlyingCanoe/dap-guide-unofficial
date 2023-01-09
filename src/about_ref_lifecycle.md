@@ -53,20 +53,121 @@ even if the original error message is not longer in the adaptor.
 It seam like a stretch that reusing no longer use error code would make a adaptor none complement, as
 long as the error code are unique within a specifique release of the adaptor.
 
+As the Message or unchanging and do not need to be registered, I do not consider the Message to be part of The protocol state.
+
 ### Module
 
-The id of a Module is a bit wirde. the only thing the spec say about the id is that it must be "unique".
+There tow dap msg whitch can modify the list of Module.
 
-The only place where the Module is unambiguously use is in the Module Event, where it can be use by the adaptor to update or remove a Module.
+- Module Event
+- Module Request
 
-So the Module is valid from the moment it is added to the (implicit) list of module.
-There are tow way a module can be added to loaded module.
+The Module Event allow the adapter to add or remove a specific Module
 
-- a Module Event which as the raison set to 'new'
-- be included in response to a module request
+The Module Request is gated behind the supportsModulesRequest capability
 
-A module continue to be valid util the moment a Module Event with the raison set to 'removed' and with the module id.
+The Module Request replace the list of Module by the list it return.
 
 ### Thread
 
-The list of Thread
+There three dap msg whitch can modify the list of Thread.
+
+- Thread Event
+- Thread Request
+- TerminateThread Request
+
+The Thread Request allow the client to ask for a updated Thread list.
+The Thread list is replace by the list included in the response.
+
+The Thread Event allow the adapter to remove a Thread from the list of Thread, however it does not allow the adaptor to
+add Thread to the list.
+
+The Thread Event only contain a reference to a Thread.
+
+If the Thread Event has the raison 'exited', the Thread is remove from the list.
+
+If the Thread Event has the raison 'started', the adaptor merely inform the client that it could update the list of thread with a thread request
+Despit a 'started' Thread Event only being a hint, the threadId is require to not be the id of any Thread in the list of Thread.
+
+It could be argue that the id in the Thread Event need not be asigne to a Thread in subsequent Thread Request, because Thread event are optional
+the Thread could have exited and no 'exited' Thread event emited.
+
+Furthermore the overview state
+
+> Whenever the generic debugger receives a stopped or a thread event, the development tool requests all threads that exist at that point in time.
+
+Which could be taken as meaning that the threadId of a 'started' Thread Event is ignore.
+
+The TerminateThreads Request is gated behind the supportsTerminateThreadsRequest capability.
+
+The effect a TerminateThreads Request on the the thread list is ambiguous.
+The response is just a acknowledgment, the spec does't not say if the response should only be send after the Thread where successfully terminated,
+or if update to the Thread list (if any) should come in the form of a 'stopped' thread event.
+
+I assume that the list is updated when the the response is send.
+
+### Source
+
+In the protocol Source can come from the client or from the adaptor. All the field are optional with the exception of Name.
+The Name field is mendatory only when it come from the adaptor.
+
+There are 2 field which cause a whole lot of ambiguity.
+
+- sourceReference
+- adapterData
+
+let start with sourceReference and adapterData.
+
+the doc on the adapterData state that
+
+> The client should leave the data intact and persist it across sessions.
+
+So the client need a way of figuring out if a source is the same source. The sourceReference look like a premising place to start,
+but the doc explicitly forbid it.
+
+> Since a `sourceReference` is only valid for a session, it can not be used to persist a source.
+
+the spec does no say what sould be use to persist a source across a session
+
+I consider that the answer depend on the type of Source. this concept is not define in the spec.
+
+#### Type of Source
+
+In the Debug Adaptor Protocol, I consider that three kind of Source exist:
+
+- Reference Source
+- Path Source
+- Unavailable Source
+
+Reference Source are those wiche containe a nonzero sourceReference (tecniquly a sourceReference grater than 0 see the Number Type for detail)
+Path Source are Source which containe Path and do not contain a sourceReference.
+Unavailable Source contain neither a sourceReference nor a Path
+
+#### Source Identity
+
+I consider the identity of Reference Source to be establish by the equality of the reference (which is a integer).
+for Path Source the identity is determine by the equality of the Path. A Path Source and a Reference Source are never the same source.
+
+Only Path Source persist across session.
+
+I do not consider Unavailable Source has having a Identity.
+
+#### Source Request
+
+Source request allow a client to ask for the content of a Source.
+
+the spec state that path
+
+> It is only used to locate and load the content of the source if no`sourceReference` is specified (or its value is 0).
+
+#### List of Source State
+
+I consider both Reference Source and Path Source as being in one list of source.
+
+The following dap msg can update that list
+
+- LoadedSource Event
+- Output Event
+- Breakpoint Event
+
+#### Source: conclusion
