@@ -90,7 +90,7 @@ If the Thread Event has the raison 'started', the adaptor merely inform the clie
 Despit a 'started' Thread Event only being a hint, the threadId is require to not be the id of any Thread in the list of Thread.
 
 It could be argue that the id in the Thread Event need not be asigne to a Thread in subsequent Thread Request, because Thread event are optional
-the Thread could have exited and no 'exited' Thread event emited.
+the Thread could have exited and no 'exited' Thread event emitted.
 
 Furthermore the overview state
 
@@ -109,7 +109,7 @@ I assume that the list is updated when the the response is send.
 ### Source
 
 In the protocol Source can come from the client or from the adaptor. All the field are optional with the exception of Name.
-The Name field is mendatory only when it come from the adaptor.
+The Name field is mandatory only when it come from the adaptor.
 
 There are 2 field which cause a whole lot of ambiguity.
 
@@ -127,47 +127,28 @@ but the doc explicitly forbid it.
 
 > Since a `sourceReference` is only valid for a session, it can not be used to persist a source.
 
-the spec does no say what sould be use to persist a source across a session
+the spec does no say what should be use to persist a source across a session
 
-I consider that the answer depend on the type of Source. this concept is not define in the spec.
+I do not know how client typically handle this persistance.
+
+To avoid dealing with that mess adaptor should not send adaptorData.
 
 #### Type of Source
 
-In the Debug Adaptor Protocol, I consider that three kind of Source exist:
+I condider that they are three type of Source
 
-- Reference Source
 - Path Source
-- Unavailable Source
+- Reference Source
+- Unavailable Source.
 
-Reference Source are those wiche containe a nonzero sourceReference (tecniquly a sourceReference grater than 0 see the Number Type for detail)
-Path Source are Source which containe Path and do not contain a sourceReference.
-Unavailable Source contain neither a sourceReference nor a Path
+Path Source are for the case where the Source are just file that are on the local disk.
+They should have a path, but no sourceReference.
+If the client send a Source request with a Path Source as the parameter, the adapter should just return the content of the local file.
 
-#### Source Identity
+If a adapter wish to provide the content of a Source, it should send a Reference Source with a non zero sourceReference. When there a Source Request for
+a Reference Source the adaptor should provide it content.
 
-I consider the identity of Reference Source to be establish by the equality of the reference (which is a integer).
-for Path Source the identity is determine by the equality of the Path. A Path Source and a Reference Source are never the same source.
+Unavailable Source are for the time where the content of a Source is not available. Unavailable should have nittier a Path nor a sourceReference.
+A Unavailable Source should have it presentationHint presentationHint set to 'deemphasize'
 
-Only Path Source persist across session.
-
-I do not consider Unavailable Source has having a Identity.
-
-#### Source Request
-
-Source request allow a client to ask for the content of a Source.
-
-the spec state that path
-
-> It is only used to locate and load the content of the source if no`sourceReference` is specified (or its value is 0).
-
-#### List of Source State
-
-I consider both Reference Source and Path Source as being in one list of source.
-
-The following dap msg can update that list
-
-- LoadedSource Event
-- Output Event
-- Breakpoint Event
-
-#### Source: conclusion
+The adapter should keep track of all Reference Source it has send.
