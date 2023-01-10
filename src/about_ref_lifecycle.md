@@ -102,14 +102,25 @@ the Source type has a field named adapterData, that field cause a lot of ambigui
 
 That field is suppose to allow the adapter to loop some data through the client so that it has more context when the client pass that Source has a parameter to a request
 without forcing the adapter to explicitly keep treak of that context. The client need to have a way of determining if it the same source and therefore it must send the data back.
-Should two Source that reference the same file, but have different origins (a free form string with no semantycle predifine value) the same Source? How checksum fit into that (note checksum are optional)?
-what about a Source that point to the same Path, but have different checksum algritme, should they be thretey like that do not have a checksum? like they have a checksum that does not match? is there a difference?
+Should two Source that reference the same file, but have different origins (a free form string with no semantically meaningful predefine value) the same Source? How checksum fit into that (note checksum are optional)?
+what about a Source that point to the same Path, but have different checksum algorithms, should they be threated like that do not have a checksum? like they have a checksum that does not match? is there a difference?
 
 The spec does't say.
 
 And to cause even more trouble, the spec state the client should persiste the data across session.
 
-A adapter can asigne a arbitery unique number for a Source with the sourceReference field, however the spec explicitly forbid using the sourceReference to parsit a Source.
+A adapter can asigne a arbitery unique number for a Source with the sourceReference field, however the spec explicitly forbid using the sourceReference to persist a Source.
 so when it come to persiting a Source across session all bet are off.
 
 To avoid the mess this guide does not use the adapterData field.
+
+### StackFrame
+
+StackFrame represent a ongoing function call in a pause debugee. A StackTrace represent the ordered list of StackFrame of a thread (if functionA call functionB, the stacktrace should be returned as \[StackFrameA, StackFrameB])
+both only last util the debugee resume it execution (only one thread resuming is enofe to invalidate all StackTrace).
+
+The client can retrieve the StackTrace for a thread using a StackTrace Request.
+The StackTrace Request as a threadId as a parameter, has such a client must retrieve the list of thread before it can ask for stacktrace.
+
+StackFrame have a id, that id must be unique on all thread. Once the debuggee resume it execution, the id of all StackFrame are invalidate and can be reuse.
+The StackFrame id can be use to retrive Scope, which can, in turn, be use to retrieve Variable.
