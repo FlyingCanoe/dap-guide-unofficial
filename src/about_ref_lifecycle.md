@@ -21,18 +21,15 @@ I have made a list of all that can be considered a object reference in the debug
 For eche type of reference I have included the object it refere to, the name of the field which hold the reference in said object,
 the type of the reference type, and my interpretation of the lifetime.
 
-| Object          | field name         | field type        | lifetime               |
-| --------------- | ------------------ | ----------------- | ---------------------- |
-| Message         | id                 | integer           | forever                |
-| Module          | id                 | integer or string | util removed           |
-| Thread          | id                 | integer           | util thread exit       |
-| Source          | sourceReference    | integer           | debug session          |
-| StackFrame      | id                 | integer           | util continue          |
-| Variable        | variablesReference | integer           | util continue          |
-| Breakpoint      | id                 | integer           | while breakpoint exist |
-| StepInTarget    | id                 | integer           | util continue          |
-| GotoTarget      | id                 | integer           | unclear/debug session  |
-| memoryReference | memoryReference    | string            | unclear/debug session  |
+| Object     | field name         | field type        | lifetime               |
+| ---------- | ------------------ | ----------------- | ---------------------- |
+| Message    | id                 | integer           | forever                |
+| Module     | id                 | integer or string | util removed           |
+| Thread     | id                 | integer           | util thread exit       |
+| Source     | sourceReference    | integer           | debug session          |
+| StackFrame | id                 | integer           | util continue          |
+| Variable   | variablesReference | integer           | util continue          |
+| Breakpoint | id                 | integer           | while breakpoint exist |
 
 The spec seam to encorenge thinking of eche reference as existing independently and being valid util the time where ther lifetime expire.
 
@@ -57,98 +54,62 @@ As the Message or unchanging and do not need to be registered, I do not consider
 
 ### Module
 
-There tow dap msg whitch can modify the list of Module.
+In a baseline mode, the adapter can add, update and remove module from a list of module through the Module Event.
 
-- Module Event
-- Module Request
+However it is not clear what a Module represent. The Module do have a list of field, but it does not seem like the client is allow to interpret them,
+at least not on a adapter independent way.
 
-The Module Event allow the adapter to add or remove a specific Module
+For example a Module have tow field which represent path, however these are "logical path" the meaning of which is "implementation defined".
 
-The Module Request is gated behind the supportsModulesRequest capability
-
-The Module Request replace the list of Module by the list it return.
+As such this guide will not use Module.
 
 ### Thread
 
-There three dap msg whitch can modify the list of Thread.
+All adapter must declare Thread. Your language do not have a concept of Thread? Does not matter make up some thread.
 
-- Thread Event
-- Thread Request
-- TerminateThread Request
+The main way in which Thread are communicated is the Thread Request. Some thing as cause the client to want a updated list of thread,
+it ask the adapter for it, the adapter send back the list.
 
-The Thread Request allow the client to ask for a updated Thread list.
-The Thread list is replace by the list included in the response.
+While the client is free to ask anytime it want, there three main raison that cause client to ask.
 
-The Thread Event allow the adapter to remove a Thread from the list of Thread, however it does not allow the adaptor to
-add Thread to the list.
+- a Thread Event
+- the debugee has stop
+- the initialisation is in progress.
 
-The Thread Event only contain a reference to a Thread.
+Thread Event are a way for a adapter to hint to the client that it should update it ui, and pontensely ask for a new list of thread.
+They come in two form 'started' and 'exited'. I 'started' thread event should include the id of a new thread. 'started' thread event does not content enofe information for
+the client to proprely update it ui, science it does not content the name of the new thread. The 'exited' thread event does contain enofe information for the client to update it ui.
 
-If the Thread Event has the raison 'exited', the Thread is remove from the list.
+Even in the case of a 'exited' thread event, it would be polite for the client to do a Thread Request, but it not a obligation.
 
-If the Thread Event has the raison 'started', the adaptor merely inform the client that it could update the list of thread with a thread request
-Despit a 'started' Thread Event only being a hint, the threadId is require to not be the id of any Thread in the list of Thread.
+When the debugee stop, the client must ask for a list of Thread science the curent thread id is use for further request about the stacktrace, the list of variable, etc.
 
-It could be argue that the id in the Thread Event need not be asigne to a Thread in subsequent Thread Request, because Thread event are optional
-the Thread could have exited and no 'exited' Thread event emitted.
-
-Furthermore the overview state
-
-> Whenever the generic debugger receives a stopped or a thread event, the development tool requests all threads that exist at that point in time.
-
-Which could be taken as meaning that the threadId of a 'started' Thread Event is ignore.
-
-The TerminateThreads Request is gated behind the supportsTerminateThreadsRequest capability.
-
-The effect a TerminateThreads Request on the the thread list is ambiguous.
-The response is just a acknowledgment, the spec does't not say if the response should only be send after the Thread where successfully terminated,
-or if update to the Thread list (if any) should come in the form of a 'stopped' thread event.
-
-I assume that the list is updated when the the response is send.
+A Thread Rquest is also part of a the initilisation sequence.
 
 ### Source
 
-In the protocol Source can come from the client or from the adaptor. All the field are optional with the exception of Name.
-The Name field is mandatory only when it come from the adaptor.
+A source can be a reference to the literal path of a file on disk, or a opaque reference that can be use to request the content of the Source,
+or a opaque reference to noting at all (for the case where the source is unavailable).
 
-There are 2 field which cause a whole lot of ambiguity.
+if a Source is a reference to a file on disk is should have path and should not have a sourceReference has having a non zero sourceReference mean
+that a Source is of the opaque reference varaity.
 
-- sourceReference
-- adapterData
+a Source that is unavailable should not have a reference and must have presentation hint set to deemphasize.
 
-let start with sourceReference and adapterData.
+#### Source adapterData
 
-the doc on the adapterData state that
+the Source type has a field named adapterData, that field cause a lot of ambiguity.
 
-> The client should leave the data intact and persist it across sessions.
+That field is suppose to allow the adapter to loop some data through the client so that it has more context when the client pass that Source has a parameter to a request
+without forcing the adapter to explicitly keep treak of that context. The client need to have a way of determining if it the same source and therefore it must send the data back.
+Should two Source that reference the same file, but have different origins (a free form string with no semantycle predifine value) the same Source? How checksum fit into that (note checksum are optional)?
+what about a Source that point to the same Path, but have different checksum algritme, should they be thretey like that do not have a checksum? like they have a checksum that does not match? is there a difference?
 
-So the client need a way of figuring out if a source is the same source. The sourceReference look like a premising place to start,
-but the doc explicitly forbid it.
+The spec does't say.
 
-> Since a `sourceReference` is only valid for a session, it can not be used to persist a source.
+And to cause even more trouble, the spec state the client should persiste the data across session.
 
-the spec does no say what should be use to persist a source across a session
+A adapter can asigne a arbitery unique number for a Source with the sourceReference field, however the spec explicitly forbid using the sourceReference to parsit a Source.
+so when it come to persiting a Source across session all bet are off.
 
-I do not know how client typically handle this persistance.
-
-To avoid dealing with that mess adaptor should not send adaptorData.
-
-#### Type of Source
-
-I condider that they are three type of Source
-
-- Path Source
-- Reference Source
-- Unavailable Source.
-
-Path Source are for the case where the Source are just file that are on the local disk.
-They should have a path, but no sourceReference.
-If the client send a Source request with a Path Source as the parameter, the adapter should just return the content of the local file.
-
-If a adapter wish to provide the content of a Source, it should send a Reference Source with a non zero sourceReference. When there a Source Request for
-a Reference Source the adaptor should provide it content.
-
-Unavailable Source are for the time where the content of a Source is not available. Unavailable should have nittier a Path nor a sourceReference.
-A Unavailable Source should have it presentationHint presentationHint set to 'deemphasize'
-
-The adapter should keep track of all Reference Source it has send.
+To avoid the mess this guide does not use the adapterData field.
