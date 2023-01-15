@@ -139,37 +139,3 @@ Currently the presentationHint can take the following value:
 The list of Scope of a specifics StackFrame
 
 A scope also has a variablesReference, which can be use to retrieve the list of variable.
-
-### Variable
-
-a Variable object represent a node in a tree. if it field variableReference is less or equal to zero, it mean that it his a leaf node, otherwise it branch node.
-
-A Variable has a name and a value both of which are freeform string.
-If a Variable is a struct/object, it can be represented as a branch node where it children are it field.
-
-The evaluateName is mean to allow a adapter to specify a name with which a Variable should be refer to in Evaluate Request which is different then the Variable name.
-It should not be use since a client is suppose to display the name field has the Variable name not the evaluateName field, furthermore the client should not interpret what pass has the expression to a evaluate request
-since what consists a expression is language dependant.
-
-#### Indexed and Named Variable
-
-The Variable request can specify a filter where it ask for only indexed Variable or only for named Variable.
-This future seam to be mean for time where paging is require has indicted by adapter sending hint of the number of child indexed and named variable
-(via the namedVariables and indexedVariables field on Variable). In addition to filtering Variable by type, the Variables Request has facility to fetch Variable in chunk which size in chosen at the client direction.
-This is accomplish via the start and count field of the Variable Request.
-
-While the various paging and filtering future are mean to be use when the adapter hint the possibility, a client can chose to use them whenever it want.
-As such, I suggests that adapter internally keep track of indexed and named Variable separately.
-
-#### Variable Presentation Hint
-
-A Variable can have a Presentation Hint there are 4 field to a presentation hint, kind, attributes, visibility and lazy.
-All the field are optional.
-
-The field kind, visibility, and attributes all have predefine value, but can also take a freeform String. If you supply a non-standard value his probable that the client will ignore it.
-visibility and kind take single value, attributes take a list of value.
-
-Most of what inside a presentation hint is self explanatory.
-There are tow thing that I find unclear/ambiguous
-
-The hasSideEffects attribute, and the lazy field.
