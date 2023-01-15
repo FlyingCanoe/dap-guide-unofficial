@@ -47,7 +47,7 @@ A Breakpoint Object represent the result of attempt at setting the breakpoint.
 
 The id field can be use by the adapter to change or remove a breakpoint through a Breakpoint Event.
 
-> Adapter refrains from unilaterally changing or removing breakpoint through the Breakpoint Event.
+> Adapter should refrains from unilaterally changing or removing breakpoint through the Breakpoint Event.
 > As such the id field is unnecessary and should not be use.
 
 The verified field indicate if the adapter successfully set the breakpoint.
@@ -61,3 +61,10 @@ The adapter could use those field to indicate that the a breakpoint was set but 
 
 This guide suggest that adapter should refrained from setting a breakpoint at a location other than the desired location.
 if setting the breakpoint at the desired location is impossible, the adapter should refuse to set the breakpoint and set the verified field to false.
+
+## Breakpoint Event
+
+A breakpoint Event may be use by a adapter to unilaterally add, modify or remove a breakpoint
+
+> Adapter should refrains from unilaterally changing or removing breakpoint.
+> As such the Breakpoint Event should not be use.
