@@ -48,7 +48,7 @@ So if a message id is included in a release of a adaptor, it should not be later
 even if the original error message is not longer in the adaptor.
 
 It seam like a stretch that reusing no longer use error code would make a adaptor none complement, as
-long as the error code are unique within a specifique release of the adaptor.
+long as the error code are unique within a specific release of the adaptor.
 
 As the Message or unchanging and do not need to be registered, I do not consider the Message to be part of The protocol state.
 
@@ -61,7 +61,7 @@ at least not on a adapter independent way.
 
 For example a Module have tow field which represent path, however these are "logical path" the meaning of which is "implementation defined".
 
-As such this guide will not use Module.
+As such this guide does not recommend the utilization of Module.
 
 ### Thread
 
@@ -116,11 +116,107 @@ To avoid the mess this guide does not use the adapterData field.
 
 ### StackFrame
 
-StackFrame represent a ongoing function call in a pause debugee. A StackTrace represent the ordered list of StackFrame of a thread (if functionA call functionB, the stacktrace should be returned as \[StackFrameA, StackFrameB])
-both only last util the debugee resume it execution (only one thread resuming is enofe to invalidate all StackTrace).
+StackFrame represent a ongoing function call in a pause debuggee. A StackTrace represent the ordered list of StackFrame of a thread (if functionA call functionB, the stacktrace should be returned as \[StackFrameA, StackFrameB])
+both only last util the debuggee resume it execution (only one thread resuming is enofe to invalidate all StackTrace).
 
 The client can retrieve the StackTrace for a thread using a StackTrace Request.
 The StackTrace Request as a threadId as a parameter, has such a client must retrieve the list of thread before it can ask for stacktrace.
 
 StackFrame have a id, that id must be unique on all thread. Once the debuggee resume it execution, the id of all StackFrame are invalidate and can be reuse.
-The StackFrame id can be use to retrive Scope, which can, in turn, be use to retrieve Variable.
+The StackFrame id can be use to retrieve Scope, which can, in turn, be use to retrieve Variable.
+
+### Scope
+
+The scope serve as a way to organize Variable. The adapter can separate it Variable between local variable, global variable and whatnot.
+A scope has a name which is a freeform string which value is up to the adapter. A scope also has a presentationHint that can be use to tell the client what the type of the Scope, in a non implementation define, machine readable way.
+
+Currently the presentationHint can take the following value:
+
+- arguments
+- locals
+- registers
+
+The list of Scope of a specifics StackFrame
+
+A scope also has a variablesReference, which can be use to retrieve the list of variable.
+
+### Variable
+
+a Variable object represent a node in a tree. if it field variableReference is less or equal to zero, it mean that it his a leaf node, otherwise it branch node.
+
+A Variable has a name and a value both of which are freeform string.
+If a Variable is a struct/object, it can be represented as a branch node where it children are it field.
+
+The evaluateName is mean to allow a adapter to specify a name with which a Variable should be refer to in Evaluate Request which is different then the Variable name.
+It should not be use since a client is suppose to display the name field has the Variable name not the evaluateName field, furthermore the client should not interpret what pass has the expression to a evaluate request
+since what consists a expression is language dependant.
+
+#### Indexed and Named Variable
+
+The Variable request can specify a filter where it ask for only indexed Variable or only for named Variable.
+This future seam to be mean for time where paging is require has indicted by adapter sending hint of the number of child indexed and named variable
+(via the namedVariables and indexedVariables field on Variable). In addition to filtering Variable by type, the Variables Request has facility to fetch Variable in chunk which size in chosen at the client direction.
+This is accomplish via the start and count field of the Variable Request.
+
+While the various paging and filtering future are mean to be use when the adapter hint the possibility, a client can chose to use them whenever it want.
+As such, I suggests that adapter internally keep track of indexed and named Variable separately.
+
+#### Variable Presentation Hint
+
+A Variable can have a Presentation Hint there are 4 field to a presentation hint, kind, attributes, visibility and lazy.
+All the field are optional.
+
+The field kind, visibility, and attributes all have predefine value, but can also take a freeform String. If you supply a non-standard value his probable that the client will ignore it.
+visibility and kind take single value, attributes take a list of value.
+
+Most of what inside a presentation hint is self explanatory.
+There are tow thing that I find unclear/ambiguous
+
+The hasSideEffects attribute, and the lazy field.
+
+### Breakpoint
+
+A breakpoint represent a place or a condition in which the debuggee can stop.
+When the protocol operate in baseline mode, breakpoint can only be source breakpoint, which are breakpoint that are set in a specific Source at a specific line,
+and (optionally) a specific column.
+
+if the right capability are enable, a breakpoint may take many form, a DataBreakpoint, a ExceptionBreakpointFilter, etc.
+Has the other form require additional capability, this guide is only interested in SourceBreakpoint
+
+A SetBreakpoint Request replace all previous source breakpoint in a specific list by a new list of source breakpoint.
+In a SetBreakpoint Request the list of source breakpoint can be specify as ether a list of line number or as a list of SourceBreakpoint object.
+
+A SourceBreakpoint object contained two field, a line number and (optionally) a column number.
+A list of line can trivially be converted to a list SourceBreakpoint object. This guide suggest that adapter internally do this before precessing the request.
+
+The response the the SetBreakpoint Request must include a list of Breakpoint object. The list must be of the same length and in the same order as the list of source breakpoint.
+
+A Breakpoint Object represent the result of attempt at setting the breakpoint.
+
+A Breakpoint Object has 8 field
+
+- id
+- verified
+- message
+- source
+- line
+- column
+- endLine
+- endColumn
+
+The id field can be use by the adapter to change or remove a breakpoint through a Breakpoint Event.
+
+This guide suggest that adapter refrains from unilaterally changing or removing breakpoint through the Breakpoint Event.
+As such the id field is unnecessary and should not be use.
+
+The verified field indicate if the adapter successfully set the breakpoint.
+
+The message field can, at the client discretion, be show to the user. It is suggested that this field be use to provide a explanation for why the a breakpoint could not be verified.
+
+This guide suggest that the message field should be use to indicet why a breakpoint could not be verified and should not be use when a breakpoint is verified.
+
+The source, line, column, endLine and endColumn fields are use to specify the position of the breakpoint.
+The adapter could use those field to indicet that the a breakpoint was set but not at the desired location.
+
+This guide suggest that adapter should refrained from setting a breakpoint at a location other than the desired location.
+if setting the breakpoint at the disered location is impossible, the adapter should refuse to set the breakpoint and set the verified field to false.
