@@ -124,18 +124,3 @@ The StackTrace Request as a threadId as a parameter, has such a client must retr
 
 StackFrame have a id, that id must be unique on all thread. Once the debuggee resume it execution, the id of all StackFrame are invalidate and can be reuse.
 The StackFrame id can be use to retrieve Scope, which can, in turn, be use to retrieve Variable.
-
-### Scope
-
-The scope serve as a way to organize Variable. The adapter can separate it Variable between local variable, global variable and whatnot.
-A scope has a name which is a freeform string which value is up to the adapter. A scope also has a presentationHint that can be use to tell the client what the type of the Scope, in a non implementation define, machine readable way.
-
-Currently the presentationHint can take the following value:
-
-- arguments
-- locals
-- registers
-
-The list of Scope of a specifics StackFrame
-
-A scope also has a variablesReference, which can be use to retrieve the list of variable.
