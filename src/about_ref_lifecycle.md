@@ -84,7 +84,7 @@ Even in the case of a 'exited' thread event, it would be polite for the client t
 
 When the debugee stop, the client must ask for a list of Thread science the curent thread id is use for further request about the stacktrace, the list of variable, etc.
 
-A Thread Rquest is also part of a the initilisation sequence.
+A Thread Request is also part of a the initilisation sequence.
 
 ### Source
 
@@ -113,14 +113,3 @@ A adapter can asigne a arbitery unique number for a Source with the sourceRefere
 so when it come to persiting a Source across session all bet are off.
 
 To avoid the mess this guide does not use the adapterData field.
-
-### StackFrame
-
-StackFrame represent a ongoing function call in a pause debuggee. A StackTrace represent the ordered list of StackFrame of a thread (if functionA call functionB, the stacktrace should be returned as \[StackFrameA, StackFrameB])
-both only last util the debuggee resume it execution (only one thread resuming is enofe to invalidate all StackTrace).
-
-The client can retrieve the StackTrace for a thread using a StackTrace Request.
-The StackTrace Request as a threadId as a parameter, has such a client must retrieve the list of thread before it can ask for stacktrace.
-
-StackFrame have a id, that id must be unique on all thread. Once the debuggee resume it execution, the id of all StackFrame are invalidate and can be reuse.
-The StackFrame id can be use to retrieve Scope, which can, in turn, be use to retrieve Variable.

@@ -5,6 +5,7 @@
 - [Breakpoint](breakpoint.md)
 - [Variable](variable.md)
 - [Scope](scope.md)
+- [StackFrame](stackFrame.md)
 - [Checksum is useless](about_checksum.md)
 - [Object Reference Lifecycle](about_ref_lifecycle.md)
 - [Breakpoint Event and Breakpoint Id are Useless](about_breakpoint_event.md)
