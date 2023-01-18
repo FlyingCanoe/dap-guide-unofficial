@@ -10,6 +10,7 @@
   - [Initialize](request/initialize.md)
   - [Launch](request/launch.md)
   - [Attach](request/attach.md)
+  - [Continue](request/continue.md)
 - [Checksum is useless](about_checksum.md)
 - [Object Reference Lifecycle](about_ref_lifecycle.md)
 - [Breakpoint Event and Breakpoint Id are Useless](about_breakpoint_event.md)
